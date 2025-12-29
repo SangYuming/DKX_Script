@@ -1,0 +1,24 @@
+{
+  "app": {
+    "name": "My Application",
+    "version": "1.0.0",
+    "debug": false
+  },
+  "log": {
+    "level": "INFO",
+    "format": "[%TIME%] [%LEVEL%] [%MODULE%] %MESSAGE%",
+    "enable": true
+  },
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "username": "root",
+    "password": "",
+    "database": "myapp"
+  },
+  "api": {
+    "baseUrl": "/api",
+    "timeout": 10000,
+    "retryCount": 3
+  }
+}
