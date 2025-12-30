@@ -1,0 +1,8 @@
+{
+    "app": {
+        "name" : "XHS",
+        "version" : "9.12.0",
+        "debug" : false,
+        "configMonitorInterval" : 60
+    }
+}

@@ -1,24 +1,36 @@
 {
+  "script": {
+    "name" : "DKX_SCRIPT",
+    "version" : "V1.0.0-local",
+    "desc" : "XHS脚本,本地数据存储版本",
+    "author" : "DKX"
+  },
   "app": {
-    "name": "My Application",
-    "version": "1.0.0",
-    "debug": false
+    "app_name" : "XHS",
+    "version": "9.12.0",
+    "min_support" : "9.12.0",
+    "max_support" : "9.12.0"
+  },
+  "device": {
+    "name" : "真我V70s",
+    "model" : "RMX3948",
+    "manufacturer" : "realme",
+    "screen":{
+      "width": 720,
+      "height": 1604
+    }
   },
   "log": {
-    "level": "INFO",
+    "level": "DEBUG",
     "format": "[%TIME%] [%LEVEL%] [%MODULE%] %MESSAGE%",
-    "enable": true
+    "enable": true,
+    "timeFormat": "%Y-%m-%d %H:%M:%S",
+    "maxDepth": 3
   },
   "database": {
-    "host": "localhost",
-    "port": 3306,
-    "username": "root",
-    "password": "",
-    "database": "myapp"
-  },
-  "api": {
-    "baseUrl": "/api",
-    "timeout": 10000,
-    "retryCount": 3
+    "host": "103.186.108.149",
+    "port": 2020,
+    "maxConnections": 10,
+    "timeout": 5000
   }
 }

@@ -2,10 +2,11 @@
 日志模块：Log
 @desc：基于引擎logn函数的二次封装，提供日志级别、格式化输出、模块标识等功能
 @author：SangYuming
-@version：1.0.0
+@version：2.0.0
 ]]
 
-local Log = {}
+local BaseModule = require("core.base.base_module")
+local Log = BaseModule:new("Log")
 
 -- 日志级别定义
 Log.LEVELS = {
@@ -16,8 +17,17 @@ Log.LEVELS = {
     FATAL = 5
 }
 
+-- 日志级别名称映射
+Log.levelNames = {
+    [Log.LEVELS.DEBUG] = "DEBUG",
+    [Log.LEVELS.INFO] = "INFO",
+    [Log.LEVELS.WARN] = "WARN",
+    [Log.LEVELS.ERROR] = "ERROR",
+    [Log.LEVELS.FATAL] = "FATAL"
+}
+
 -- 默认配置
-Log.config = {
+Log.defaultConfig = {
     level = Log.LEVELS.INFO,  -- 默认日志级别
     format = "[%TIME%] [%LEVEL%] [%MODULE%] %MESSAGE%",  -- 默认日志格式
     enable = true,  -- 是否启用日志
@@ -27,15 +37,67 @@ Log.config = {
 }
 
 -- 模块实例缓存
-local moduleInstances = {}
+Log.moduleInstances = {}
 -- 模块级别配置
-local moduleConfigs = {}
+Log.moduleConfigs = {}
 
 -- 声明loggerMT
 local loggerMT = {}
 
 -- 预声明log函数，解决循环依赖
 local log
+
+-- 重写初始化配置方法
+function Log:initConfig()
+    local Config = require("core.utils.config")
+    
+    -- 定义日志配置验证规则
+    self:registerValidationRules()
+    
+    -- 从配置中心获取日志配置，否则使用默认配置
+    local logConfig = Config:get("log", {})
+    self.config = {}
+    
+    -- 合并默认配置和从配置中心获取的配置
+    for k, v in pairs(self.defaultConfig) do
+        self.config[k] = logConfig[k] or v
+    end
+    
+    -- 将字符串级别转换为数字级别
+    if type(self.config.level) == "string" then
+        self.config.level = self.LEVELS[string.upper(self.config.level)] or self.defaultConfig.level
+    end
+    
+    return self
+end
+
+-- 注册验证规则
+function Log:registerValidationRules()
+    local Config = require("core.utils.config")
+    local validationRules = {
+        types = {
+            -- log.level可以是字符串或数字
+            ["log.level"] = function(value) 
+                return type(value) == "string" or type(value) == "number" 
+            end,
+            -- log.format必须是字符串
+            ["log.format"] = "string",
+            -- log.enable必须是布尔值
+            ["log.enable"] = "boolean",
+            -- log.timeFormat必须是字符串
+            ["log.timeFormat"] = "string",
+            -- log.maxDepth必须是数字
+            ["log.maxDepth"] = "number",
+            -- log.onLog必须是函数或nil
+            ["log.onLog"] = function(value) 
+                return value == nil or type(value) == "function" 
+            end
+        }
+    }
+    
+    Config:setModuleValidationRules("log", validationRules)
+    return self
+end
 
 -- 获取当前时间字符串
 local function getTimeString()
@@ -45,12 +107,7 @@ end
 
 -- 获取日志级别名称
 local function getLevelName(level)
-    for name, value in pairs(Log.LEVELS) do
-        if value == level then
-            return name
-        end
-    end
-    return "UNKNOWN"
+    return Log.levelNames[level] or "UNKNOWN"
 end
 
 -- 将值转换为字符串表示
@@ -152,24 +209,59 @@ local function formatMessage(format, time, level, module, message)
     end)
 end
 
--- 引擎logn函数的适配层
-local function engineLog(...)  
-    -- 检查logn函数是否存在
+-- 引擎日志函数的适配层
+local function engineLog(level, ...)  
+    local args = { ... }
+    local msg = table.concat(args, " ")
+    
+    -- 根据日志级别选择不同的引擎日志函数
     if type(logn) == "function" then
-        -- 使用引擎提供的logn函数
-        return logn(...)
+        if level == Log.LEVELS.DEBUG then
+            -- 蓝色调试信息
+            if type(logd) == "function" then
+                return logd(msg)
+            else
+                return logn(msg)
+            end
+        elseif level == Log.LEVELS.ERROR or level == Log.LEVELS.FATAL then
+            -- 红色错误信息
+            if type(loge) == "function" then
+                return loge(msg)
+            else
+                return logn(msg)
+            end
+        else
+            -- 灰色普通信息（INFO, WARN）
+            return logn(msg)
+        end
     else
         -- 在本地开发环境中使用print作为默认实现
-        local args = { ... }
-        local msg = table.concat(args, " ")
-        print("[LOCAL DEV] " .. msg)
+        -- 根据级别添加ANSI颜色代码
+        local colorCode = ""
+        local resetCode = "\027[0m"
+        
+        if level == Log.LEVELS.DEBUG then
+            -- 蓝色
+            colorCode = "\027[34m"
+        elseif level == Log.LEVELS.ERROR or level == Log.LEVELS.FATAL then
+            -- 红色
+            colorCode = "\027[31m"
+        elseif level == Log.LEVELS.WARN then
+            -- 黄色
+            colorCode = "\027[33m"
+        else
+            -- 默认（灰色/白色）
+            colorCode = "\027[37m"
+        end
+        
+        print("[LOCAL DEV] " .. colorCode .. msg .. resetCode)
         return true
     end
 end
 
 -- 获取有效配置（模块配置覆盖全局配置）
 local function getEffectiveConfig(module)
-    local moduleConfig = moduleConfigs[module] or {}
+    local moduleConfig = Log.moduleConfigs[module] or {}
     local effectiveConfig = {}
     
     -- 合并配置
@@ -196,8 +288,8 @@ log = function(level, module, ...)
     local time = getTimeString()
     local formattedMessage = formatMessage(effectiveConfig.format, time, level, module, message)
     
-    -- 使用适配后的日志输出函数
-    engineLog(formattedMessage)
+    -- 使用适配后的日志输出函数，传递日志级别
+    engineLog(level, formattedMessage)
     
     -- 调用日志回调函数
     if effectiveConfig.onLog then
@@ -229,48 +321,115 @@ loggerMT.__index = {
 
     -- 设置模块级别的日志配置
     setConfig = function(self, config)
-        if not moduleConfigs[self.name] then
-            moduleConfigs[self.name] = {}
+        if not Log.moduleConfigs[self.name] then
+            Log.moduleConfigs[self.name] = {}
         end
         for key, value in pairs(config) do
-            moduleConfigs[self.name][key] = value
+            Log.moduleConfigs[self.name][key] = value
         end
     end
 }
 
 -- 创建模块日志实例
 function Log:getModule(name)
-    if not moduleInstances[name] then
+    if not self.moduleInstances[name] then
         local moduleLogger = setmetatable({ name = name }, loggerMT)
-        moduleInstances[name] = moduleLogger
+        self.moduleInstances[name] = moduleLogger
     end
     
-    return moduleInstances[name]
+    return self.moduleInstances[name]
 end
 
 -- 配置日志模块
 function Log:setConfig(config)
     for key, value in pairs(config) do
-        Log.config[key] = value
+        self.config[key] = value
     end
     return self -- 支持链式调用
 end
 
 -- 设置日志级别
 function Log:setLevel(level)
-    Log.config.level = level
+    self.config.level = level
     return self -- 支持链式调用
 end
 
 -- 启用/禁用日志
 function Log:enable(enabled)
-    Log.config.enable = enabled
+    self.config.enable = enabled
     return self -- 支持链式调用
 end
 
 -- 获取全局日志实例
 function Log:getLogger()
-    return Log:getModule("GLOBAL")
+    return self:getModule("GLOBAL")
 end
+
+-- 更新配置
+function Log:updateConfig()
+    self:initConfig()
+    -- 更新所有模块实例的配置
+    for name, instance in pairs(self.moduleInstances) do
+        self.moduleConfigs[name] = nil
+    end
+    return self
+end
+
+-- 注册验证规则
+function Log:registerValidationRules()
+    local Config = require("core.utils.config")
+    local validationRules = {
+        types = {
+            -- log.level可以是字符串或数字
+            ["log.level"] = function(value) 
+                return type(value) == "string" or type(value) == "number" 
+            end,
+            -- log.format必须是字符串
+            ["log.format"] = "string",
+            -- log.enable必须是布尔值
+            ["log.enable"] = "boolean",
+            -- log.timeFormat必须是字符串
+            ["log.timeFormat"] = "string",
+            -- log.maxDepth必须是数字
+            ["log.maxDepth"] = "number",
+            -- log.onLog必须是函数或nil
+            ["log.onLog"] = function(value) 
+                return value == nil or type(value) == "function" 
+            end
+        }
+    }
+    
+    Config:setModuleValidationRules("log", validationRules)
+    return self
+end
+
+-- 重写初始化日志方法
+function Log:initLogger()
+    -- 直接初始化日志，不依赖BaseModule的默认实现
+    -- 因为Log模块本身就是日志模块，所以不需要再加载其他日志模块
+    -- 这里的logger是模块级别的日志记录器，用于记录Log模块自身的日志
+    -- 注意：这里使用了一个简单的print实现，避免循环依赖
+    self.logger = {
+        info = function(_, ...)
+            local args = { ... }
+            local msg = table.concat(args, " ")
+            print("[Log Module] " .. msg)
+        end,
+        debug = function(_, ...)
+            local args = { ... }
+            local msg = table.concat(args, " ")
+            print("[Log Module] [DEBUG] " .. msg)
+        end,
+        error = function(_, ...)
+            local args = { ... }
+            local msg = table.concat(args, " ")
+            print("[Log Module] [ERROR] " .. msg)
+        end
+    }
+    return self
+end
+
+-- 初始化模块
+Log:init()
 
 return Log
