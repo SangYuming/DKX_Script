@@ -3,6 +3,8 @@
         "name" : "XHS",
         "version" : "9.12.0",
         "debug" : false,
+        "minSupport" : "9.12.0",
+        "maxSupport" : "9.12.0",
         "configMonitorInterval" : 60
     }
 }

@@ -35,7 +35,8 @@ end
 -- 配置文件路径 - 使用平台兼容的路径分隔符
 local configPaths = {
     "config" .. "/" .. "default.json",
-    "config" .. "/" .. "app.json"
+    "config" .. "/" .. "app.json",
+    "config" .. "/" .. "constants.json"
 }
 
 -- 获取平台兼容的文件路径

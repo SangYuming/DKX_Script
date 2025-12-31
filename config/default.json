@@ -2,14 +2,8 @@
   "script": {
     "name" : "DKX_SCRIPT",
     "version" : "V1.0.0-local",
-    "desc" : "XHS脚本,本地数据存储版本",
+    "_desc" : "XHS脚本",
     "author" : "DKX"
-  },
-  "app": {
-    "app_name" : "XHS",
-    "version": "9.12.0",
-    "min_support" : "9.12.0",
-    "max_support" : "9.12.0"
   },
   "device": {
     "name" : "真我V70s",
@@ -27,10 +21,65 @@
     "timeFormat": "%Y-%m-%d %H:%M:%S",
     "maxDepth": 3
   },
-  "database": {
+  "http": {
     "host": "103.186.108.149",
     "port": 2020,
-    "maxConnections": 10,
-    "timeout": 5000
+    "timeout": 10000,
+    "defaultHeaders": {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    "enableLog": true,
+    "logLevel": "INFO",
+    "maxLogBodyLength": 1000
+  },
+  "api" : {
+    "saveAccount" :{
+      "_desc" : "保存账号",
+      "url" : "/DKX/collect",
+      "method" : "GET",
+      "params" : {
+        "names": "string",
+        "TypesID": "enum:TypesID",
+        "country": "enum:country"
+      }
+    },
+    "getDvName" :{
+      "_desc" : "获取DV名称",
+      "url" : "/DKX/GetDvname",
+      "method" : "GET"
+    },
+    "getDvAccount" :{
+      "_desc" : "获取DV账号",
+      "url" : "/DKX/GetDv",
+      "method" : "GET"
+    },
+    "getDvFans" :{
+      "_desc" : "获取DV粉丝",
+      "url" : "/DKX/GetDvfans",
+      "method" : "GET"
+    },
+    "getMessageContent" :{
+      "_desc" : "获取私信内容",
+      "url" : "/DKX/qzsx",
+      "method" : "GET"
+    },
+    "getKeyword" :{
+      "_desc" : "获取关键词",
+      "url" : "/DKX/keyword",
+      "method" : "GET"
+    },
+    "saveData" :{
+      "_desc" : "保存数据",
+      "url" : "/DKX/push",
+      "method" : "GET"
+    },
+    "testPost" :{
+      "_desc" : "测试POST请求",
+      "url" : "/DKX/testPost",
+      "method" : "POST",
+      "params" : {
+        "name" : "string"
+      }
+    }
   }
 }

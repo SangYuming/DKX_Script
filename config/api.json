@@ -1,0 +1,52 @@
+{
+  "api": {
+    "saveAccount": {
+      "_desc": "保存账号",
+      "url": "/DKX/collect",
+      "method": "GET",
+      "params": {
+        "names": "string",
+        "TypesID": "enum:TypesID",
+        "country": "enum:country"
+      }
+    },
+    "getDvName": {
+      "_desc": "获取DV名称",
+      "url": "/DKX/GetDvname",
+      "method": "GET"
+    },
+    "getDvAccount": {
+      "_desc": "获取DV账号",
+      "url": "/DKX/GetDv",
+      "method": "GET"
+    },
+    "getDvFans": {
+      "_desc": "获取DV粉丝",
+      "url": "/DKX/GetDvfans",
+      "method": "GET"
+    },
+    "getMessageContent": {
+      "_desc": "获取私信内容",
+      "url": "/DKX/qzsx",
+      "method": "GET"
+    },
+    "getKeyword": {
+      "_desc": "获取关键词",
+      "url": "/DKX/keyword",
+      "method": "GET"
+    },
+    "saveData": {
+      "_desc": "保存数据",
+      "url": "/DKX/push",
+      "method": "GET"
+    },
+    "testPost": {
+      "_desc": "测试POST请求",
+      "url": "/DKX/testPost",
+      "method": "POST",
+      "params": {
+        "name": "string"
+      }
+    }
+  }
+}

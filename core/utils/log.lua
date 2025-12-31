@@ -403,7 +403,7 @@ function Log:registerValidationRules()
     return self
 end
 
--- 重写初始化日志方法
+-- 重写始化日志方法
 function Log:initLogger()
     -- 直接初始化日志，不依赖BaseModule的默认实现
     -- 因为Log模块本身就是日志模块，所以不需要再加载其他日志模块
